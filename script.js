@@ -166,7 +166,7 @@ function nextRound() {
     resetKeyboard();
     updateWordDisplay();
     updateWrongLetters();
-    updateLives();  // This will set the initial lives
+    updateLives();
     updateCurrentPlayer();
 }
 
@@ -186,7 +186,7 @@ function guessLetter(letter) {
     
     updateWordDisplay();
     updateWrongLetters();
-    updateLives();  // Update lives after each guess
+    updateLives();
     checkGameStatus();
 }
 
@@ -205,8 +205,26 @@ function updateWordDisplay() {
     display.textContent = displayText.trim();
 }
 
+// ============ BUG 2 FIX: Correct letters in wrong guesses section ============
+// OLD BUGGY CODE:
+// function updateWrongLetters() {
+//     const wrongLettersDiv = document.getElementById('wrongLetters');
+//     const wrong = gameState.guessedLetters.filter(letter => 
+//         !gameState.currentWord.includes(letter)
+//     );
+//     
+//     if (wrong.length === 0) {
+//         wrongLettersDiv.textContent = 'None yet';
+//     } else {
+//         wrongLettersDiv.textContent = gameState.guessedLetters.join(', '); // ← BUG HERE
+//     }
+// }
+
+// FIXED CODE:
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
+    
+    // Filter to get ONLY wrong letters (letters not in the word)
     const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
@@ -214,12 +232,14 @@ function updateWrongLetters() {
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
+        // Display ONLY the wrong letters, not all guessed letters
         wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
+// ============ END OF BUG 2 FIX ============
 
-// ============ BUG 1 FIX: CORRECTED VERSION ============
-// The HTML already has " / 6" after the span, so we just need to update the number
+// ============ BUG 1 FIX: Incorrect Lives Counter ============
+// FIXED CODE:
 function updateLives() {
     // Calculate remaining lives correctly (6 - wrong guesses)
     const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
@@ -227,7 +247,7 @@ function updateLives() {
     // Ensure it never goes below 0 or above maxWrong
     const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
     
-    // Update ONLY the number part (not the " / 6")
+    // Update ONLY the number part (HTML already has " / 6")
     document.getElementById('livesLeft').textContent = boundedLives;
     
     // Optional: Add visual feedback
