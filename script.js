@@ -242,17 +242,20 @@ function updateLives() {
 }
 // ============ END OF BUG 1 FIX ============
 
+// ========== BUG #6 FIX ==========
+// Changed from wrong order ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg']
+// To correct order: head, body, left arm, right arm, left leg, right leg
 function updateHangman() {
-    const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
-    
-    const wrongOrder = ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg'];
+    // CORRECT ORDER as per requirements: head, body, left arm, right arm, left leg, right leg
+    const correctOrder = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
     const partIndex = gameState.wrongGuesses - 1;
     
-    if (partIndex >= 0 && partIndex < wrongOrder.length) {
-        const partToShow = wrongOrder[partIndex];
+    if (partIndex >= 0 && partIndex < correctOrder.length) {
+        const partToShow = correctOrder[partIndex];
         document.getElementById(partToShow).style.display = 'block';
     }
 }
+// ========== END BUG #6 FIX ==========
 
 function resetHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
