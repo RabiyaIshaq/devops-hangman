@@ -95,26 +95,6 @@ function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
 
-    // ========== BUG #7 FIX ==========
-    // Check for empty word
-    if (word === '') {
-        alert("Word cannot be empty!");
-        return;
-    }
-    
-    // Check if word contains numbers
-    if (/\d/.test(word)) {
-        alert("Words must contain only uppercase letters (A-Z). No numbers allowed!");
-        return;
-    }
-    
-    // Check for duplicates
-    if (wordBank.includes(word)) {
-        alert("Word already exists in word bank!");
-        return;
-    }
-    // ========== END BUG #7 FIX ==========
-
     wordBank.push(word);
     input.value = '';
     saveWordBank();
@@ -124,18 +104,38 @@ function addWord() {
 function editWord(index) {
     const newWord = prompt('Edit word:', wordBank[index]);
     if (newWord) {
-        wordBank.splice(index, 1);
+        wordBank[index] = newWord.trim().toUpperCase(); // ← FIXED: Actually updates the word
         saveWordBank();
         displayWordBank();
     }
 }
 
+// ============ BUG 4 FIX: Word deletion not working ============
+// OLD BUGGY CODE:
+// function deleteWord(index) {
+//     if (confirm('Are you sure you want to delete this word?')) {
+//         saveWordBank();  // ← Doesn't delete, just saves
+//         displayWordBank(); // ← Displays without deletion
+//     }
+// }
+
+// FIXED CODE:
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
+        // Actually remove the word from the array
+        wordBank.splice(index, 1);
+        
+        // Save the updated word bank to localStorage
         saveWordBank();
+        
+        // Refresh the display
         displayWordBank();
+        
+        // Optional: Show success message
+        console.log(`Word deleted successfully. Total words: ${wordBank.length}`);
     }
 }
+// ============ END OF BUG 4 FIX ============
 
 function generateKeyboard() {
     const keyboard = document.getElementById('keyboard');
@@ -254,20 +254,17 @@ function updateLives() {
     }
 }
 
-// ========== BUG #6 FIX ==========
-// Changed from wrong order ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg']
-// To correct order: head, body, left arm, right arm, left leg, right leg
 function updateHangman() {
-    // CORRECT ORDER as per requirements: head, body, left arm, right arm, left leg, right leg
-    const correctOrder = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+    const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+    
+    const wrongOrder = ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg'];
     const partIndex = gameState.wrongGuesses - 1;
     
-    if (partIndex >= 0 && partIndex < correctOrder.length) {
-        const partToShow = correctOrder[partIndex];
+    if (partIndex >= 0 && partIndex < wrongOrder.length) {
+        const partToShow = wrongOrder[partIndex];
         document.getElementById(partToShow).style.display = 'block';
     }
 }
-// ========== END BUG #6 FIX ==========
 
 function resetHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
@@ -315,60 +312,30 @@ function checkGameStatus() {
     }
 }
 
-// ============ BUG 3 FIX: Wrong player declared winner ============
-// OLD BUGGY CODE:
-// function gameWon() {
-//     gameState.gameActive = false;
-//     
-//     if (gameState.currentPlayer === 1) {
-//         gameState.player2.score += 10;  // ← GIVES POINTS TO OPPONENT
-//         document.getElementById('score2').textContent = gameState.player2.score;
-//     } else {
-//         gameState.player1.score += 10;  // ← GIVES POINTS TO OPPONENT
-//         document.getElementById('score1').textContent = gameState.player1.score;
-//     }
-//     
-//     const statusDiv = document.getElementById('gameStatus');
-//     const statusMsg = document.getElementById('statusMessage');
-//     
-//     const winnerName = gameState.currentPlayer === 1 ? 
-//         gameState.player2.name : gameState.player1.name;
-//     
-//     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
-//     statusDiv.classList.add('show', 'winner');
-// }
-
-// FIXED CODE:
 function gameWon() {
     gameState.gameActive = false;
     
     const statusDiv = document.getElementById('gameStatus');
     const statusMsg = document.getElementById('statusMessage');
     
-    // Get the ACTUAL winning player (current player who just won)
     let winnerName;
     
     if (gameState.currentPlayer === 1) {
-        // Player 1 won - give points to player 1
         gameState.player1.score += 10;
         document.getElementById('score1').textContent = gameState.player1.score;
         winnerName = gameState.player1.name;
     } else {
-        // Player 2 won - give points to player 2
         gameState.player2.score += 10;
         document.getElementById('score2').textContent = gameState.player2.score;
         winnerName = gameState.player2.name;
     }
     
-    // Display correct winner message
     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'winner');
     
-    // Switch turns for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
-// ============ END OF BUG 3 FIX ============
 
 function gameLost() {
     gameState.gameActive = false;
@@ -382,7 +349,6 @@ function gameLost() {
     statusMsg.textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'loser');
     
-    // Switch turns for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
