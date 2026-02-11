@@ -57,7 +57,10 @@ function loadWordBank() {
 }
 
 function saveWordBank() {
-    localStorage.setItem('devopsWords', JSON.stringify(wordBank));
+    // ========== BUG #9 FIX ==========
+    // Use correct localStorage key to match loadWordBank()
+    localStorage.setItem('wordBank', JSON.stringify(wordBank));
+    // ========== END BUG #9 FIX ==========
 }
 
 function displayWordBank() {
@@ -124,19 +127,19 @@ function addWord() {
 function editWord(index) {
     const newWord = prompt('Edit word:', wordBank[index]);
     if (newWord) {
-        wordBank.splice(index, 1);
-        saveWordBank();
+        wordBank[index] = newWord.trim().toUpperCase();  // Edit in place
+        saveWordBank();  // Save changes
         displayWordBank();
     }
 }
 
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
-        saveWordBank();
+        wordBank.splice(index, 1);  // Remove the word
+        saveWordBank();  // Save updated list
         displayWordBank();
     }
 }
-
 function generateKeyboard() {
     const keyboard = document.getElementById('keyboard');
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
