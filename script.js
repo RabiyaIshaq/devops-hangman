@@ -166,7 +166,7 @@ function nextRound() {
     resetKeyboard();
     updateWordDisplay();
     updateWrongLetters();
-    updateLives();
+    updateLives();  // This will set the initial lives
     updateCurrentPlayer();
 }
 
@@ -186,7 +186,7 @@ function guessLetter(letter) {
     
     updateWordDisplay();
     updateWrongLetters();
-    updateLives();
+    updateLives();  // Update lives after each guess
     checkGameStatus();
 }
 
@@ -214,14 +214,33 @@ function updateWrongLetters() {
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
-        wrongLettersDiv.textContent = gameState.guessedLetters.join(', ');
+        wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
 
+// ============ BUG 1 FIX: CORRECTED VERSION ============
+// The HTML already has " / 6" after the span, so we just need to update the number
 function updateLives() {
-    const livesLeft = gameState.maxWrong - gameState.wrongGuesses + 1;
-    document.getElementById('livesLeft').textContent = livesLeft;
+    // Calculate remaining lives correctly (6 - wrong guesses)
+    const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
+    
+    // Ensure it never goes below 0 or above maxWrong
+    const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
+    
+    // Update ONLY the number part (not the " / 6")
+    document.getElementById('livesLeft').textContent = boundedLives;
+    
+    // Optional: Add visual feedback
+    const livesElement = document.getElementById('livesLeft');
+    if (boundedLives <= 2) {
+        livesElement.style.color = '#dc3545'; // Red for low lives
+    } else if (boundedLives <= 4) {
+        livesElement.style.color = '#ffc107'; // Yellow for medium lives
+    } else {
+        livesElement.style.color = '#28a745'; // Green for high lives
+    }
 }
+// ============ END OF BUG 1 FIX ============
 
 function updateHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
