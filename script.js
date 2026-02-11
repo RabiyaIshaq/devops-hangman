@@ -95,6 +95,26 @@ function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
 
+    // ========== BUG #7 FIX ==========
+    // Check for empty word
+    if (word === '') {
+        alert("Word cannot be empty!");
+        return;
+    }
+    
+    // Check if word contains numbers
+    if (/\d/.test(word)) {
+        alert("Words must contain only uppercase letters (A-Z). No numbers allowed!");
+        return;
+    }
+    
+    // Check for duplicates
+    if (wordBank.includes(word)) {
+        alert("Word already exists in word bank!");
+        return;
+    }
+    // ========== END BUG #7 FIX ==========
+
     wordBank.push(word);
     input.value = '';
     saveWordBank();
@@ -223,17 +243,20 @@ function updateLives() {
     document.getElementById('livesLeft').textContent = livesLeft;
 }
 
+// ========== BUG #6 FIX ==========
+// Changed from wrong order ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg']
+// To correct order: head, body, left arm, right arm, left leg, right leg
 function updateHangman() {
-    const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
-    
-    const wrongOrder = ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg'];
+    // CORRECT ORDER as per requirements: head, body, left arm, right arm, left leg, right leg
+    const correctOrder = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
     const partIndex = gameState.wrongGuesses - 1;
     
-    if (partIndex >= 0 && partIndex < wrongOrder.length) {
-        const partToShow = wrongOrder[partIndex];
+    if (partIndex >= 0 && partIndex < correctOrder.length) {
+        const partToShow = correctOrder[partIndex];
         document.getElementById(partToShow).style.display = 'block';
     }
 }
+// ========== END BUG #6 FIX ==========
 
 function resetHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
