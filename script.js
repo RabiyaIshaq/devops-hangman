@@ -225,26 +225,8 @@ function updateWordDisplay() {
     display.textContent = displayText.trim();
 }
 
-// ============ BUG 2 FIX: Correct letters in wrong guesses section ============
-// OLD BUGGY CODE:
-// function updateWrongLetters() {
-//     const wrongLettersDiv = document.getElementById('wrongLetters');
-//     const wrong = gameState.guessedLetters.filter(letter => 
-//         !gameState.currentWord.includes(letter)
-//     );
-//     
-//     if (wrong.length === 0) {
-//         wrongLettersDiv.textContent = 'None yet';
-//     } else {
-//         wrongLettersDiv.textContent = gameState.guessedLetters.join(', '); // ← BUG HERE
-//     }
-// }
-
-// FIXED CODE:
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
-    
-    // Filter to get ONLY wrong letters (letters not in the word)
     const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
@@ -252,35 +234,25 @@ function updateWrongLetters() {
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
-        // Display ONLY the wrong letters, not all guessed letters
         wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
-// ============ END OF BUG 2 FIX ============
 
-// ============ BUG 1 FIX: Incorrect Lives Counter ============
-// FIXED CODE:
 function updateLives() {
-    // Calculate remaining lives correctly (6 - wrong guesses)
     const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
-    
-    // Ensure it never goes below 0 or above maxWrong
     const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
     
-    // Update ONLY the number part (HTML already has " / 6")
     document.getElementById('livesLeft').textContent = boundedLives;
     
-    // Optional: Add visual feedback
     const livesElement = document.getElementById('livesLeft');
     if (boundedLives <= 2) {
-        livesElement.style.color = '#dc3545'; // Red for low lives
+        livesElement.style.color = '#dc3545';
     } else if (boundedLives <= 4) {
-        livesElement.style.color = '#ffc107'; // Yellow for medium lives
+        livesElement.style.color = '#ffc107';
     } else {
-        livesElement.style.color = '#28a745'; // Green for high lives
+        livesElement.style.color = '#28a745';
     }
 }
-// ============ END OF BUG 1 FIX ============
 
 // ========== BUG #6 FIX ==========
 // Changed from wrong order ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg']
@@ -343,26 +315,60 @@ function checkGameStatus() {
     }
 }
 
+// ============ BUG 3 FIX: Wrong player declared winner ============
+// OLD BUGGY CODE:
+// function gameWon() {
+//     gameState.gameActive = false;
+//     
+//     if (gameState.currentPlayer === 1) {
+//         gameState.player2.score += 10;  // ← GIVES POINTS TO OPPONENT
+//         document.getElementById('score2').textContent = gameState.player2.score;
+//     } else {
+//         gameState.player1.score += 10;  // ← GIVES POINTS TO OPPONENT
+//         document.getElementById('score1').textContent = gameState.player1.score;
+//     }
+//     
+//     const statusDiv = document.getElementById('gameStatus');
+//     const statusMsg = document.getElementById('statusMessage');
+//     
+//     const winnerName = gameState.currentPlayer === 1 ? 
+//         gameState.player2.name : gameState.player1.name;
+//     
+//     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
+//     statusDiv.classList.add('show', 'winner');
+// }
+
+// FIXED CODE:
 function gameWon() {
     gameState.gameActive = false;
-    
-    if (gameState.currentPlayer === 1) {
-        gameState.player2.score += 10;
-        document.getElementById('score2').textContent = gameState.player2.score;
-    } else {
-        gameState.player1.score += 10;
-        document.getElementById('score1').textContent = gameState.player1.score;
-    }
     
     const statusDiv = document.getElementById('gameStatus');
     const statusMsg = document.getElementById('statusMessage');
     
-    const winnerName = gameState.currentPlayer === 1 ? 
-        gameState.player2.name : gameState.player1.name;
+    // Get the ACTUAL winning player (current player who just won)
+    let winnerName;
     
+    if (gameState.currentPlayer === 1) {
+        // Player 1 won - give points to player 1
+        gameState.player1.score += 10;
+        document.getElementById('score1').textContent = gameState.player1.score;
+        winnerName = gameState.player1.name;
+    } else {
+        // Player 2 won - give points to player 2
+        gameState.player2.score += 10;
+        document.getElementById('score2').textContent = gameState.player2.score;
+        winnerName = gameState.player2.name;
+    }
+    
+    // Display correct winner message
     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'winner');
+    
+    // Switch turns for next round
+    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+    updateCurrentPlayer();
 }
+// ============ END OF BUG 3 FIX ============
 
 function gameLost() {
     gameState.gameActive = false;
@@ -376,5 +382,7 @@ function gameLost() {
     statusMsg.textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'loser');
     
+    // Switch turns for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+    updateCurrentPlayer();
 }
