@@ -225,8 +225,26 @@ function updateWordDisplay() {
     display.textContent = displayText.trim();
 }
 
+// ============ BUG 2 FIX: Correct letters in wrong guesses section ============
+// OLD BUGGY CODE:
+// function updateWrongLetters() {
+//     const wrongLettersDiv = document.getElementById('wrongLetters');
+//     const wrong = gameState.guessedLetters.filter(letter => 
+//         !gameState.currentWord.includes(letter)
+//     );
+//     
+//     if (wrong.length === 0) {
+//         wrongLettersDiv.textContent = 'None yet';
+//     } else {
+//         wrongLettersDiv.textContent = gameState.guessedLetters.join(', '); // ← BUG HERE
+//     }
+// }
+
+// FIXED CODE:
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
+    
+    // Filter to get ONLY wrong letters (letters not in the word)
     const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
@@ -234,14 +252,35 @@ function updateWrongLetters() {
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
-        wrongLettersDiv.textContent = gameState.guessedLetters.join(', ');
+        // Display ONLY the wrong letters, not all guessed letters
+        wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
+// ============ END OF BUG 2 FIX ============
 
+// ============ BUG 1 FIX: Incorrect Lives Counter ============
+// FIXED CODE:
 function updateLives() {
-    const livesLeft = gameState.maxWrong - gameState.wrongGuesses + 1;
-    document.getElementById('livesLeft').textContent = livesLeft;
+    // Calculate remaining lives correctly (6 - wrong guesses)
+    const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
+    
+    // Ensure it never goes below 0 or above maxWrong
+    const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
+    
+    // Update ONLY the number part (HTML already has " / 6")
+    document.getElementById('livesLeft').textContent = boundedLives;
+    
+    // Optional: Add visual feedback
+    const livesElement = document.getElementById('livesLeft');
+    if (boundedLives <= 2) {
+        livesElement.style.color = '#dc3545'; // Red for low lives
+    } else if (boundedLives <= 4) {
+        livesElement.style.color = '#ffc107'; // Yellow for medium lives
+    } else {
+        livesElement.style.color = '#28a745'; // Green for high lives
+    }
 }
+// ============ END OF BUG 1 FIX ============
 
 // ========== BUG #6 FIX ==========
 // Changed from wrong order ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg']
