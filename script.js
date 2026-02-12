@@ -61,6 +61,11 @@ function saveWordBank() {
     localStorage.setItem('wordBank', JSON.stringify(wordBank)); // Fixed: changed from 'devopsWords' to 'wordBank'
 }
 // ============ END OF BUG 9 FIX ============
+// ============ BUG 4.5 FIX: Storage key inconsistency ============
+function saveWordBank() {
+    localStorage.setItem('wordBank', JSON.stringify(wordBank)); // Fixed: changed from 'devopsWords' to 'wordBank'
+}
+// ============ END OF STORAGE FIX ============
 
 function displayWordBank() {
     const wordList = document.getElementById('wordList');
@@ -98,6 +103,11 @@ function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
    
+// ============ BUG 5 FIX: Word bank accepts duplicate words ============
+function addWord() {
+    const input = document.getElementById('newWord');
+    const word = input.value.trim().toUpperCase();
+    
     // Validation 1: Check for empty input
     if (!word) {
         alert('Please enter a word.');
@@ -106,6 +116,9 @@ function addWord() {
     }
    
     // Validation 2: Check for duplicate words (BUG 5)
+    // Validation 2: Check for duplicate words (BUG 5 - already fixed by Student A)
+    
+    // Validation 2: Check for duplicate words
     if (wordBank.includes(word)) {
         alert(`"${word}" already exists in the word bank!`);
         input.value = '';
@@ -114,6 +127,8 @@ function addWord() {
     }
    
     // Validation 3: Check for only letters - fixes BUG 7 (numbers) and BUG 8 (special characters)
+    
+    // Validation 3: Check for only letters (no numbers or special characters)
     if (!/^[A-Z]+$/.test(word)) {
         alert('Word can only contain letters (A-Z). No numbers or special characters allowed.');
         input.focus();
@@ -121,6 +136,7 @@ function addWord() {
         return;
     }
    
+    
     // All validations passed - add the word
     wordBank.push(word);
     input.value = '';
@@ -128,6 +144,8 @@ function addWord() {
     displayWordBank();
 }
 // ============ END OF BUG 5,7,8 FIX ============
+// ============ END OF BUG 7 & 8 FIX ============
+// ============ END OF BUG 5 FIX ============
 
 // ============ BUG 4.6 FIX: Edit word not working correctly ============
 function editWord(index) {
@@ -137,18 +155,24 @@ function editWord(index) {
     if (newWord) {
         const trimmedWord = newWord.trim().toUpperCase();
        
+    
+    if (newWord) {
+        const trimmedWord = newWord.trim().toUpperCase();
+        
         // Validation 1: Check for empty input
         if (!trimmedWord) {
             alert('Word cannot be empty.');
             return;
         }
        
+        
         // Validation 2: Check if edited word would be a duplicate (excluding itself)
         if (trimmedWord !== currentWord && wordBank.includes(trimmedWord)) {
             alert(`"${trimmedWord}" already exists in the word bank!`);
             return;
         }
        
+        
         // Validation 3: Check for only letters
         if (!/^[A-Z]+$/.test(trimmedWord)) {
             alert('Word can only contain letters (A-Z).');
@@ -156,6 +180,8 @@ function editWord(index) {
         }
        
         // Update the word in place
+        
+        // Update the word in place (don't splice and remove)
         wordBank[index] = trimmedWord;
         saveWordBank();
         displayWordBank();
@@ -293,12 +319,16 @@ function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
    
     const wrong = gameState.guessedLetters.filter(letter =>
+    
+    // Filter to get ONLY wrong letters (letters not in the word)
+    const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
    
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
+        // Display ONLY the wrong letters, not all guessed letters
         wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
@@ -306,18 +336,26 @@ function updateWrongLetters() {
 
 // ============ BUG 1 FIX: Incorrect Lives Counter ============
 function updateLives() {
+    // Calculate remaining lives correctly (6 - wrong guesses)
     const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
+    
+    // Ensure it never goes below 0 or above maxWrong
     const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
    
     document.getElementById('livesLeft').textContent = boundedLives;
    
+    
+    // Update ONLY the number part (HTML already has " / 6")
+    document.getElementById('livesLeft').textContent = boundedLives;
+    
+    // Optional: Add visual feedback
     const livesElement = document.getElementById('livesLeft');
     if (boundedLives <= 2) {
-        livesElement.style.color = '#dc3545';
+        livesElement.style.color = '#dc3545'; // Red for low lives
     } else if (boundedLives <= 4) {
-        livesElement.style.color = '#ffc107';
+        livesElement.style.color = '#ffc107'; // Yellow for medium lives
     } else {
-        livesElement.style.color = '#28a745';
+        livesElement.style.color = '#28a745'; // Green for high lives
     }
 }
 // ============ END OF BUG 1 FIX ============
@@ -336,6 +374,17 @@ function updateHangman() {
     }
 }
 // ============ END OF BUG 6 FIX ============
+function updateHangman() {
+    const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+    
+    const wrongOrder = ['head', 'leftArm', 'rightArm', 'body', 'leftLeg', 'rightLeg'];
+    const partIndex = gameState.wrongGuesses - 1;
+    
+    if (partIndex >= 0 && partIndex < wrongOrder.length) {
+        const partToShow = wrongOrder[partIndex];
+        document.getElementById(partToShow).style.display = 'block';
+    }
+}
 
 function resetHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
