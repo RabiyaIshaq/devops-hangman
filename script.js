@@ -56,9 +56,11 @@ function loadWordBank() {
     displayWordBank();
 }
 
+// ============ BUG 4.5 FIX: Storage key inconsistency ============
 function saveWordBank() {
-    localStorage.setItem('devopsWords', JSON.stringify(wordBank));
+    localStorage.setItem('wordBank', JSON.stringify(wordBank)); // Fixed: changed from 'devopsWords' to 'wordBank'
 }
+// ============ END OF STORAGE FIX ============
 
 function displayWordBank() {
     const wordList = document.getElementById('wordList');
@@ -91,68 +93,82 @@ function displayWordBank() {
     });
 }
 
+// ============ BUG 5 FIX: Word bank accepts duplicate words ============
 function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
-
-    // ========== BUG #8 FIX ==========
-    // Check for empty word
-    if (word === '') {
-        alert("Word cannot be empty!");
+    
+    // Validation 1: Check for empty input
+    if (!word) {
+        alert('Please enter a word.');
+        input.focus();
         return;
     }
     
-    // Check if word contains special characters (anything not A-Z)
-    if (!/^[A-Z]+$/.test(word)) {
-        alert("Words must contain only uppercase letters (A-Z). No numbers or special characters allowed!");
-        return;
-    }
-    
-    // Check for duplicates
+    // Validation 2: Check for duplicate words
     if (wordBank.includes(word)) {
-        alert("Word already exists in word bank!");
+        alert(`"${word}" already exists in the word bank!`);
+        input.value = '';
+        input.focus();
         return;
     }
-    // ========== END BUG #8 FIX ==========
-
+    
+    // Validation 3: Check for only letters (no numbers or special characters)
+    if (!/^[A-Z]+$/.test(word)) {
+        alert('Word can only contain letters (A-Z). No numbers or special characters allowed.');
+        input.focus();
+        input.select();
+        return;
+    }
+    
+    // All validations passed - add the word
     wordBank.push(word);
     input.value = '';
     saveWordBank();
     displayWordBank();
 }
+// ============ END OF BUG 5 FIX ============
 
+// ============ BUG 4.6 FIX: Edit word not working correctly ============
 function editWord(index) {
-    const newWord = prompt('Edit word:', wordBank[index]);
+    const currentWord = wordBank[index];
+    const newWord = prompt('Edit word:', currentWord);
+    
     if (newWord) {
-        wordBank[index] = newWord.trim().toUpperCase(); // ← FIXED: Actually updates the word
+        const trimmedWord = newWord.trim().toUpperCase();
+        
+        // Validation 1: Check for empty input
+        if (!trimmedWord) {
+            alert('Word cannot be empty.');
+            return;
+        }
+        
+        // Validation 2: Check if edited word would be a duplicate (excluding itself)
+        if (trimmedWord !== currentWord && wordBank.includes(trimmedWord)) {
+            alert(`"${trimmedWord}" already exists in the word bank!`);
+            return;
+        }
+        
+        // Validation 3: Check for only letters
+        if (!/^[A-Z]+$/.test(trimmedWord)) {
+            alert('Word can only contain letters (A-Z).');
+            return;
+        }
+        
+        // Update the word in place (don't splice and remove)
+        wordBank[index] = trimmedWord;
         saveWordBank();
         displayWordBank();
     }
 }
+// ============ END OF EDIT WORD FIX ============
 
 // ============ BUG 4 FIX: Word deletion not working ============
-// OLD BUGGY CODE:
-// function deleteWord(index) {
-//     if (confirm('Are you sure you want to delete this word?')) {
-//         saveWordBank();  // ← Doesn't delete, just saves
-//         displayWordBank(); // ← Displays without deletion
-//     }
-// }
-
-// FIXED CODE:
 function deleteWord(index) {
     if (confirm('Are you sure you want to delete this word?')) {
-        // Actually remove the word from the array
-        wordBank.splice(index, 1);
-        
-        // Save the updated word bank to localStorage
+        wordBank.splice(index, 1); // Actually remove the word
         saveWordBank();
-        
-        // Refresh the display
         displayWordBank();
-        
-        // Optional: Show success message
-        console.log(`Word deleted successfully. Total words: ${wordBank.length}`);
     }
 }
 // ============ END OF BUG 4 FIX ============
@@ -245,8 +261,11 @@ function updateWordDisplay() {
     display.textContent = displayText.trim();
 }
 
+// ============ BUG 2 FIX: Correct letters in wrong guesses section ============
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
+    
+    // Filter to get ONLY wrong letters (letters not in the word)
     const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
@@ -254,25 +273,34 @@ function updateWrongLetters() {
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
+        // Display ONLY the wrong letters, not all guessed letters
         wrongLettersDiv.textContent = wrong.join(', ');
     }
 }
+// ============ END OF BUG 2 FIX ============
 
+// ============ BUG 1 FIX: Incorrect Lives Counter ============
 function updateLives() {
+    // Calculate remaining lives correctly (6 - wrong guesses)
     const remainingLives = gameState.maxWrong - gameState.wrongGuesses;
+    
+    // Ensure it never goes below 0 or above maxWrong
     const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
     
+    // Update ONLY the number part (HTML already has " / 6")
     document.getElementById('livesLeft').textContent = boundedLives;
     
+    // Optional: Add visual feedback
     const livesElement = document.getElementById('livesLeft');
     if (boundedLives <= 2) {
-        livesElement.style.color = '#dc3545';
+        livesElement.style.color = '#dc3545'; // Red for low lives
     } else if (boundedLives <= 4) {
-        livesElement.style.color = '#ffc107';
+        livesElement.style.color = '#ffc107'; // Yellow for medium lives
     } else {
-        livesElement.style.color = '#28a745';
+        livesElement.style.color = '#28a745'; // Green for high lives
     }
 }
+// ============ END OF BUG 1 FIX ============
 
 function updateHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
@@ -332,30 +360,37 @@ function checkGameStatus() {
     }
 }
 
+// ============ BUG 3 FIX: Wrong player declared winner ============
 function gameWon() {
     gameState.gameActive = false;
     
     const statusDiv = document.getElementById('gameStatus');
     const statusMsg = document.getElementById('statusMessage');
     
+    // Get the ACTUAL winning player (current player who just won)
     let winnerName;
     
     if (gameState.currentPlayer === 1) {
+        // Player 1 won - give points to player 1
         gameState.player1.score += 10;
         document.getElementById('score1').textContent = gameState.player1.score;
         winnerName = gameState.player1.name;
     } else {
+        // Player 2 won - give points to player 2
         gameState.player2.score += 10;
         document.getElementById('score2').textContent = gameState.player2.score;
         winnerName = gameState.player2.name;
     }
     
+    // Display correct winner message
     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'winner');
     
+    // Switch turns for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
+// ============ END OF BUG 3 FIX ============
 
 function gameLost() {
     gameState.gameActive = false;
@@ -369,6 +404,7 @@ function gameLost() {
     statusMsg.textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'loser');
     
+    // Switch turns for next round
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
