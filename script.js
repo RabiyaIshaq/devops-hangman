@@ -1,5 +1,5 @@
 const defaultWords = [
-    'DEVOPS', 'AGILE', 'VERSION', 'BRANCH', 'GITHUB', 
+    'DEVOPS', 'AGILE', 'VERSION', 'BRANCH', 'GITHUB',
     'CHANGES', 'FEATURES', 'HOTFIX', 'CONTINUOUS', 'INTEGRATION',
     'DEPLOYMENT', 'TESTING', 'COMMIT', 'SNAPSHOT', 'CULTURE',
     'PIPELINE', 'DOCKER', 'SCRUM', 'KANBAN', 'MERGE'
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function toggleTheme() {
     const themeIcon = document.querySelector('.theme-icon');
-    
+   
     if (themeIcon.textContent === '🌙') {
         themeIcon.textContent = '☀️';
     } else {
@@ -37,10 +37,10 @@ function toggleTheme() {
 function switchTab(tabName) {
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
-    
+   
     const tabButtons = document.querySelectorAll('.tab');
     tabButtons.forEach(btn => btn.classList.remove('active'));
-    
+   
     document.getElementById(tabName).classList.add('active');
     event.target.classList.add('active');
 }
@@ -56,6 +56,11 @@ function loadWordBank() {
     displayWordBank();
 }
 
+// ============ BUG 9 FIX: Word bank changes don't persist after refresh ============
+function saveWordBank() {
+    localStorage.setItem('wordBank', JSON.stringify(wordBank)); // Fixed: changed from 'devopsWords' to 'wordBank'
+}
+// ============ END OF BUG 9 FIX ============
 // ============ BUG 4.5 FIX: Storage key inconsistency ============
 function saveWordBank() {
     localStorage.setItem('wordBank', JSON.stringify(wordBank)); // Fixed: changed from 'devopsWords' to 'wordBank'
@@ -65,9 +70,9 @@ function saveWordBank() {
 function displayWordBank() {
     const wordList = document.getElementById('wordList');
     const wordCount = document.getElementById('wordCount');
-    
+   
     wordCount.textContent = wordBank.length;
-    
+   
     if (wordBank.length === 0) {
         wordList.innerHTML = `
             <div class="empty-state">
@@ -77,7 +82,7 @@ function displayWordBank() {
         `;
         return;
     }
-    
+   
     wordList.innerHTML = '';
     wordBank.forEach((word, index) => {
         const wordItem = document.createElement('div');
@@ -93,6 +98,11 @@ function displayWordBank() {
     });
 }
 
+// ============ BUG 7 & BUG 8 FIX: Word bank accepts numeric and special characters ============
+function addWord() {
+    const input = document.getElementById('newWord');
+    const word = input.value.trim().toUpperCase();
+   
 // ============ BUG 5 FIX: Word bank accepts duplicate words ============
 function addWord() {
     const input = document.getElementById('newWord');
@@ -104,6 +114,8 @@ function addWord() {
         input.focus();
         return;
     }
+   
+    // Validation 2: Check for duplicate words (BUG 5 - already fixed by Student A)
     
     // Validation 2: Check for duplicate words
     if (wordBank.includes(word)) {
@@ -112,6 +124,8 @@ function addWord() {
         input.focus();
         return;
     }
+   
+    // Validation 3: Check for only letters - fixes BUG 7 (numbers) and BUG 8 (special characters)
     
     // Validation 3: Check for only letters (no numbers or special characters)
     if (!/^[A-Z]+$/.test(word)) {
@@ -120,6 +134,7 @@ function addWord() {
         input.select();
         return;
     }
+   
     
     // All validations passed - add the word
     wordBank.push(word);
@@ -127,12 +142,17 @@ function addWord() {
     saveWordBank();
     displayWordBank();
 }
+// ============ END OF BUG 7 & 8 FIX ============
 // ============ END OF BUG 5 FIX ============
 
 // ============ BUG 4.6 FIX: Edit word not working correctly ============
 function editWord(index) {
     const currentWord = wordBank[index];
     const newWord = prompt('Edit word:', currentWord);
+   
+    if (newWord) {
+        const trimmedWord = newWord.trim().toUpperCase();
+       
     
     if (newWord) {
         const trimmedWord = newWord.trim().toUpperCase();
@@ -142,18 +162,22 @@ function editWord(index) {
             alert('Word cannot be empty.');
             return;
         }
+       
         
         // Validation 2: Check if edited word would be a duplicate (excluding itself)
         if (trimmedWord !== currentWord && wordBank.includes(trimmedWord)) {
             alert(`"${trimmedWord}" already exists in the word bank!`);
             return;
         }
+       
         
         // Validation 3: Check for only letters
         if (!/^[A-Z]+$/.test(trimmedWord)) {
             alert('Word can only contain letters (A-Z).');
             return;
         }
+       
+        // Update the word in place
         
         // Update the word in place (don't splice and remove)
         wordBank[index] = trimmedWord;
@@ -176,7 +200,7 @@ function deleteWord(index) {
 function generateKeyboard() {
     const keyboard = document.getElementById('keyboard');
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    
+   
     keyboard.innerHTML = '';
     for (let letter of letters) {
         const button = document.createElement('button');
@@ -191,15 +215,15 @@ function generateKeyboard() {
 function startGame() {
     const p1Name = document.getElementById('player1Name').value.trim();
     const p2Name = document.getElementById('player2Name').value.trim();
-    
+   
     gameState.player1.name = p1Name || 'Player 1';
     gameState.player2.name = p2Name || 'Player 2';
-    
+   
     document.getElementById('player1Display').textContent = gameState.player1.name;
     document.getElementById('player2Display').textContent = gameState.player2.name;
-    
+   
     document.getElementById('gameArea').style.display = 'block';
-    
+   
     nextRound();
 }
 
@@ -208,14 +232,20 @@ function nextRound() {
         alert('No words in the word bank! Add some words first.');
         return;
     }
-    
+   
     gameState.guessedLetters = [];
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
-    
-    const randomIndex = Math.floor(Math.random() * wordBank.length);
+   
+    // ============ PREVENT SAME WORD CONSECUTIVELY (already fixed by Student A) ============
+    let randomIndex;
+    do {
+        randomIndex = Math.floor(Math.random() * wordBank.length);
+    } while (wordBank.length > 1 && wordBank[randomIndex] === gameState.currentWord);
+    // ============ END OF CONSECUTIVE WORDS FIX ============
+   
     gameState.currentWord = wordBank[randomIndex];
-    
+   
     document.getElementById('gameStatus').classList.remove('show');
     document.getElementById('gameStatus').className = 'game-status';
     resetHangman();
@@ -228,18 +258,18 @@ function nextRound() {
 
 function guessLetter(letter) {
     if (!gameState.gameActive) return;
-    
+   
     if (gameState.guessedLetters.includes(letter)) {
         return;
     }
-    
+   
     gameState.guessedLetters.push(letter);
-    
+   
     if (!gameState.currentWord.includes(letter)) {
         gameState.wrongGuesses++;
         updateHangman();
     }
-    
+   
     updateWordDisplay();
     updateWrongLetters();
     updateLives();
@@ -249,7 +279,7 @@ function guessLetter(letter) {
 function updateWordDisplay() {
     const display = document.getElementById('wordDisplay');
     let displayText = '';
-    
+   
     for (let letter of gameState.currentWord) {
         if (gameState.guessedLetters.includes(letter)) {
             displayText += letter + ' ';
@@ -257,19 +287,21 @@ function updateWordDisplay() {
             displayText += '_ ';
         }
     }
-    
+   
     display.textContent = displayText.trim();
 }
 
 // ============ BUG 2 FIX: Correct letters in wrong guesses section ============
 function updateWrongLetters() {
     const wrongLettersDiv = document.getElementById('wrongLetters');
+   
+    const wrong = gameState.guessedLetters.filter(letter =>
     
     // Filter to get ONLY wrong letters (letters not in the word)
     const wrong = gameState.guessedLetters.filter(letter => 
         !gameState.currentWord.includes(letter)
     );
-    
+   
     if (wrong.length === 0) {
         wrongLettersDiv.textContent = 'None yet';
     } else {
@@ -286,6 +318,9 @@ function updateLives() {
     
     // Ensure it never goes below 0 or above maxWrong
     const boundedLives = Math.max(0, Math.min(remainingLives, gameState.maxWrong));
+   
+    document.getElementById('livesLeft').textContent = boundedLives;
+   
     
     // Update ONLY the number part (HTML already has " / 6")
     document.getElementById('livesLeft').textContent = boundedLives;
@@ -302,6 +337,20 @@ function updateLives() {
 }
 // ============ END OF BUG 1 FIX ============
 
+// ============ BUG 6 FIX: Hangman body part drawing sequence incorrect ============
+function updateHangman() {
+    const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+   
+    // FIXED: Correct anatomical order - body appears BEFORE arms
+    const correctOrder = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+    const partIndex = gameState.wrongGuesses - 1;
+   
+    if (partIndex >= 0 && partIndex < correctOrder.length) {
+        const partToShow = correctOrder[partIndex];
+        document.getElementById(partToShow).style.display = 'block';
+    }
+}
+// ============ END OF BUG 6 FIX ============
 function updateHangman() {
     const parts = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
     
@@ -334,7 +383,7 @@ function resetKeyboard() {
 function updateCurrentPlayer() {
     const player1Div = document.getElementById('player1Score');
     const player2Div = document.getElementById('player2Score');
-    
+   
     if (gameState.currentPlayer === 1) {
         player1Div.classList.add('active');
         player2Div.classList.remove('active');
@@ -348,12 +397,12 @@ function checkGameStatus() {
     const allLettersGuessed = [...gameState.currentWord].every(letter =>
         gameState.guessedLetters.includes(letter)
     );
-    
+   
     if (allLettersGuessed) {
         gameWon();
         return;
     }
-    
+   
     if (gameState.wrongGuesses >= gameState.maxWrong) {
         gameLost();
         return;
@@ -363,30 +412,25 @@ function checkGameStatus() {
 // ============ BUG 3 FIX: Wrong player declared winner ============
 function gameWon() {
     gameState.gameActive = false;
-    
+   
     const statusDiv = document.getElementById('gameStatus');
     const statusMsg = document.getElementById('statusMessage');
-    
-    // Get the ACTUAL winning player (current player who just won)
+   
     let winnerName;
-    
+   
     if (gameState.currentPlayer === 1) {
-        // Player 1 won - give points to player 1
         gameState.player1.score += 10;
         document.getElementById('score1').textContent = gameState.player1.score;
         winnerName = gameState.player1.name;
     } else {
-        // Player 2 won - give points to player 2
         gameState.player2.score += 10;
         document.getElementById('score2').textContent = gameState.player2.score;
         winnerName = gameState.player2.name;
     }
-    
-    // Display correct winner message
+   
     statusMsg.textContent = `🎉 ${winnerName} won! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'winner');
-    
-    // Switch turns for next round
+   
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
@@ -394,17 +438,16 @@ function gameWon() {
 
 function gameLost() {
     gameState.gameActive = false;
-    
+   
     const statusDiv = document.getElementById('gameStatus');
     const statusMsg = document.getElementById('statusMessage');
-    
-    const currentPlayerName = gameState.currentPlayer === 1 ? 
+   
+    const currentPlayerName = gameState.currentPlayer === 1 ?
         gameState.player1.name : gameState.player2.name;
-    
+   
     statusMsg.textContent = `😢 ${currentPlayerName} lost! The word was: ${gameState.currentWord}`;
     statusDiv.classList.add('show', 'loser');
-    
-    // Switch turns for next round
+   
     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
     updateCurrentPlayer();
 }
