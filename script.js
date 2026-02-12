@@ -98,7 +98,7 @@ function displayWordBank() {
     });
 }
 
-// ============ BUG 7 & BUG 8 FIX: Word bank accepts numeric and special characters ============
+// ============ BUG 5 & BUG 7 & BUG 8 FIX: Word bank validation ============
 function addWord() {
     const input = document.getElementById('newWord');
     const word = input.value.trim().toUpperCase();
@@ -115,6 +115,7 @@ function addWord() {
         return;
     }
    
+    // Validation 2: Check for duplicate words (BUG 5)
     // Validation 2: Check for duplicate words (BUG 5 - already fixed by Student A)
     
     // Validation 2: Check for duplicate words
@@ -142,6 +143,7 @@ function addWord() {
     saveWordBank();
     displayWordBank();
 }
+// ============ END OF BUG 5,7,8 FIX ============
 // ============ END OF BUG 7 & 8 FIX ============
 // ============ END OF BUG 5 FIX ============
 
@@ -212,12 +214,32 @@ function generateKeyboard() {
     }
 }
 
+// ============ BUG 10 FIX: Empty player names allowed ============
 function startGame() {
     const p1Name = document.getElementById('player1Name').value.trim();
     const p2Name = document.getElementById('player2Name').value.trim();
    
-    gameState.player1.name = p1Name || 'Player 1';
-    gameState.player2.name = p2Name || 'Player 2';
+    // Validation 1: Check for empty player names
+    if (!p1Name) {
+        alert('Please enter Player 1 name.');
+        document.getElementById('player1Name').focus();
+        return;
+    }
+   
+    if (!p2Name) {
+        alert('Please enter Player 2 name.');
+        document.getElementById('player2Name').focus();
+        return;
+    }
+   
+    // Validation 2: Check for identical names (case insensitive)
+    if (p1Name.toLowerCase() === p2Name.toLowerCase()) {
+        alert('Player names must be different.');
+        return;
+    }
+   
+    gameState.player1.name = p1Name;
+    gameState.player2.name = p2Name;
    
     document.getElementById('player1Display').textContent = gameState.player1.name;
     document.getElementById('player2Display').textContent = gameState.player2.name;
@@ -226,6 +248,7 @@ function startGame() {
    
     nextRound();
 }
+// ============ END OF BUG 10 FIX ============
 
 function nextRound() {
     if (wordBank.length === 0) {
@@ -237,7 +260,7 @@ function nextRound() {
     gameState.wrongGuesses = 0;
     gameState.gameActive = true;
    
-    // ============ PREVENT SAME WORD CONSECUTIVELY (already fixed by Student A) ============
+    // ============ BUG 5.5 FIX: Prevent same word from appearing consecutively ============
     let randomIndex;
     do {
         randomIndex = Math.floor(Math.random() * wordBank.length);
